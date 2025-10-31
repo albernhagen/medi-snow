@@ -1,0 +1,144 @@
+package location
+
+import (
+	"fmt"
+	"skadi-backend/internal/providers/openmeteo"
+	"skadi-backend/internal/providers/openstreetmap"
+	"skadi-backend/internal/types"
+	"sync"
+)
+
+// ElevationProvider defines the interface for elevation data providers
+type ElevationProvider interface {
+	GetElevation(latitude, longitude float64) (*openmeteo.ElevationAPIResponse, error)
+}
+
+// LocationProvider defines the interface for location data providers
+type LocationProvider interface {
+	GetElevation(latitude, longitude float64) (*openstreetmap.LookupAPIResponse, error)
+}
+
+// locationService implements the LocationService interface
+type locationService struct {
+	elevationProvider ElevationProvider
+	locationProvider  LocationProvider
+}
+
+// NewLocationService creates a new location service with real provider clients
+func NewLocationService() LocationService {
+	return &locationService{
+		elevationProvider: openmeteo.NewElevationClient(),
+		locationProvider:  openstreetmap.NewClient(),
+	}
+}
+
+// NewLocationServiceWithProviders creates a new location service with custom providers
+// This is useful for testing with mock providers
+func NewLocationServiceWithProviders(
+	elevationProvider ElevationProvider,
+	locationProvider LocationProvider,
+) LocationService {
+	return &locationService{
+		elevationProvider: elevationProvider,
+		locationProvider:  locationProvider,
+	}
+}
+
+// GetForecastPoint retrieves comprehensive location data by calling providers in parallel
+func (s *locationService) GetForecastPoint(latitude, longitude float64) (*types.ForecastPoint, error) {
+	var (
+		wg            sync.WaitGroup
+		elevationResp *openmeteo.ElevationAPIResponse
+		locationResp  *openstreetmap.LookupAPIResponse
+		elevationErr  error
+		locationErr   error
+	)
+
+	// Launch both API calls in parallel
+	wg.Add(2)
+
+	// Get elevation data
+	go func() {
+		defer wg.Done()
+		elevationResp, elevationErr = s.elevationProvider.GetElevation(latitude, longitude)
+		if elevationErr != nil {
+			elevationErr = fmt.Errorf("failed to get elevation: %w", elevationErr)
+		}
+	}()
+
+	// Get location data
+	go func() {
+		defer wg.Done()
+		locationResp, locationErr = s.locationProvider.GetElevation(latitude, longitude)
+		if locationErr != nil {
+			locationErr = fmt.Errorf("failed to get location: %w", locationErr)
+		}
+	}()
+
+	// Wait for both calls to complete
+	wg.Wait()
+
+	// Check for errors
+	if elevationErr != nil && locationErr != nil {
+		return nil, fmt.Errorf("multiple errors: elevation: %v; location: %v", elevationErr, locationErr)
+	}
+
+	if elevationErr != nil {
+		return nil, elevationErr
+	}
+	if locationErr != nil {
+		return nil, locationErr
+	}
+
+	// Translate provider responses to domain types
+	elevation, err := s.translateElevation(elevationResp)
+	if err != nil {
+		return nil, err
+	}
+
+	locationInfo, err := s.translateLocationInfo(locationResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.ForecastPoint{
+		Coordinates: types.NewCoords(latitude, longitude),
+		Elevation:   elevation,
+		Location:    locationInfo,
+	}, nil
+}
+
+// translateElevation converts an OpenMeteo elevation response to domain Elevation type
+func (s *locationService) translateElevation(resp *openmeteo.ElevationAPIResponse) (types.Elevation, error) {
+	if resp == nil {
+		return types.Elevation{}, fmt.Errorf("elevation response is nil")
+	}
+
+	if len(resp.Elevation) == 0 {
+		return types.Elevation{}, fmt.Errorf("elevation response contains no data")
+	}
+
+	// OpenMeteo returns elevation in meters
+	return types.NewElevationFromMeters(resp.Elevation[0]), nil
+}
+
+// translateLocationInfo converts an OpenStreetMap reverse lookup response to domain LocationInfo type
+func (s *locationService) translateLocationInfo(resp *openstreetmap.LookupAPIResponse) (types.LocationInfo, error) {
+	if resp == nil {
+		return types.LocationInfo{}, fmt.Errorf("lookup response is nil")
+	}
+
+	// Extract the display name or name as the location name
+	name := resp.DisplayName
+	if resp.Name != "" {
+		name = resp.Name
+	}
+
+	return types.LocationInfo{
+		Name:        name,
+		County:      resp.Address.County,
+		State:       resp.Address.State,
+		Country:     resp.Address.Country,
+		CountryCode: resp.Address.CountryCode,
+	}, nil
+}
