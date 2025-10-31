@@ -2,8 +2,8 @@ package location
 
 import (
 	"errors"
-	"skadi-backend/internal/providers/openmeteo"
 	"skadi-backend/internal/providers/openstreetmap"
+	"skadi-backend/internal/providers/usgs"
 	"skadi-backend/internal/types"
 	"strings"
 	"testing"
@@ -12,11 +12,11 @@ import (
 // Mock providers for testing
 
 type mockElevationProvider struct {
-	response *openmeteo.ElevationAPIResponse
+	response *usgs.ElevationPointAPIResponse
 	err      error
 }
 
-func (m *mockElevationProvider) GetElevation(latitude, longitude float64) (*openmeteo.ElevationAPIResponse, error) {
+func (m *mockElevationProvider) GetElevation(latitude, longitude float64) (*usgs.ElevationPointAPIResponse, error) {
 	return m.response, m.err
 }
 
@@ -25,7 +25,7 @@ type mockLocationProvider struct {
 	err      error
 }
 
-func (m *mockLocationProvider) GetElevation(latitude, longitude float64) (*openstreetmap.LookupAPIResponse, error) {
+func (m *mockLocationProvider) Lookup(latitude, longitude float64) (*openstreetmap.LookupAPIResponse, error) {
 	return m.response, m.err
 }
 
@@ -34,7 +34,7 @@ func TestLocationService_GetForecastPoint(t *testing.T) {
 		name              string
 		lat               float64
 		lon               float64
-		elevationResponse *openmeteo.ElevationAPIResponse
+		elevationResponse *usgs.ElevationPointAPIResponse
 		elevationErr      error
 		locationResponse  *openstreetmap.LookupAPIResponse
 		locationErr       error
@@ -46,7 +46,7 @@ func TestLocationService_GetForecastPoint(t *testing.T) {
 			name: "successful forecast point retrieval",
 			lat:  39.11539,
 			lon:  -107.65840,
-			elevationResponse: &openmeteo.ElevationAPIResponse{
+			elevationResponse: &usgs.ElevationPointAPIResponse{
 				Elevation: []float64{2743.5},
 			},
 			locationResponse: &openstreetmap.LookupAPIResponse{
@@ -103,7 +103,7 @@ func TestLocationService_GetForecastPoint(t *testing.T) {
 			name: "location provider error",
 			lat:  39.11539,
 			lon:  -107.65840,
-			elevationResponse: &openmeteo.ElevationAPIResponse{
+			elevationResponse: &usgs.ElevationPointAPIResponse{
 				Elevation: []float64{2743.5},
 			},
 			locationResponse: nil,
@@ -115,7 +115,7 @@ func TestLocationService_GetForecastPoint(t *testing.T) {
 			name: "elevation adapter error - empty array",
 			lat:  39.11539,
 			lon:  -107.65840,
-			elevationResponse: &openmeteo.ElevationAPIResponse{
+			elevationResponse: &usgs.ElevationPointAPIResponse{
 				Elevation: []float64{},
 			},
 			locationResponse: &openstreetmap.LookupAPIResponse{

@@ -26,7 +26,7 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) Lookup(latitude, longitude float64) (*LookupAPIResponse, error) {
+func (c *Client) GetElevation(latitude, longitude float64) (*LookupAPIResponse, error) {
 	// Build URL with query parameters
 	u, err := url.Parse(c.baseURL)
 	if err != nil {

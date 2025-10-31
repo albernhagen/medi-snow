@@ -1,6 +1,6 @@
 //go:build integration
 
-package openmeteo
+package usgs
 
 import (
 	"encoding/json"
@@ -12,12 +12,12 @@ func TestElevationClient_GetElevation_Integration(t *testing.T) {
 	lat := 39.11539
 	lon := -107.65840
 
-	client := NewElevationClient()
+	client := NewClient()
 
 	t.Logf("Making API call to OpenMeteo Elevation API...")
 	t.Logf("Coordinates: lat=%f, lon=%f", lat, lon)
 
-	resp, err := client.GetElevation(lat, lon)
+	resp, err := client.GetElevationPoint(lat, lon)
 	if err != nil {
 		t.Fatalf("Failed to get elevation: %v", err)
 	}
@@ -35,15 +35,11 @@ func TestElevationClient_GetElevation_Integration(t *testing.T) {
 		t.Fatal("Response is nil")
 	}
 
-	if len(resp.Elevation) == 0 {
-		t.Fatal("Elevation array is empty")
-	}
+	t.Logf("Elevation: %v ft", resp.Value)
 
-	t.Logf("Elevation: %v meters", resp.Elevation[0])
-
-	// Sanity check - Aspen area should be between 2000-4000 meters
-	if resp.Elevation[0] < 1000 || resp.Elevation[0] > 5000 {
-		t.Errorf("Elevation seems unreasonable: %v meters", resp.Elevation[0])
+	// Sanity check
+	if resp.Value < 9000 || resp.Value > 11000 {
+		t.Errorf("Elevation seems unreasonable: %v ft", resp.Value)
 	}
 
 	t.Log("✓ API call successful, response structure valid")

@@ -14,7 +14,7 @@ func TestForecastClient_GetForecast_Integration(t *testing.T) {
 	elevation := 4352.0 // meters
 	forecastDays := 1
 
-	client := NewForecastClient()
+	client := NewClient()
 
 	t.Logf("Making API call to OpenMeteo Forecast API...")
 	t.Logf("Coordinates: lat=%f, lon=%f, elevation=%f meters", lat, lon, elevation)

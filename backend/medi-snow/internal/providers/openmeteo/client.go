@@ -16,20 +16,20 @@ const (
 	baseForecastURL = "https://api.open-meteo.com/v1/forecast"
 )
 
-type ForecastClient struct {
+type Client struct {
 	httpClient *http.Client
 	baseURL    string
 }
 
-func NewForecastClient() *ForecastClient {
-	return &ForecastClient{
+func NewClient() *Client {
+	return &Client{
 		httpClient: &http.Client{},
 		baseURL:    baseForecastURL,
 	}
 }
 
 // GetForecast fetches the weather forecast for the given latitude, longitude, and elevation in meters
-func (c *ForecastClient) GetForecast(latitude, longitude, elevationMeters float64, forecastDays int) (*ForecastAPIResponse, error) {
+func (c *Client) GetForecast(latitude, longitude, elevationMeters float64, forecastDays int) (*ForecastAPIResponse, error) {
 	u, err := url.Parse(c.baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse base URL: %w", err)

@@ -2,20 +2,20 @@ package location
 
 import (
 	"fmt"
-	"skadi-backend/internal/providers/openmeteo"
 	"skadi-backend/internal/providers/openstreetmap"
+	"skadi-backend/internal/providers/usgs"
 	"skadi-backend/internal/types"
 	"sync"
 )
 
 // ElevationProvider defines the interface for elevation data providers
 type ElevationProvider interface {
-	GetElevation(latitude, longitude float64) (*openmeteo.ElevationAPIResponse, error)
+	GetElevationPoint(latitude, longitude float64) (*usgs.ElevationPointAPIResponse, error)
 }
 
 // LocationProvider defines the interface for location data providers
 type LocationProvider interface {
-	GetElevation(latitude, longitude float64) (*openstreetmap.LookupAPIResponse, error)
+	Lookup(latitude, longitude float64) (*openstreetmap.LookupAPIResponse, error)
 }
 
 // locationService implements the LocationService interface
@@ -27,7 +27,7 @@ type locationService struct {
 // NewLocationService creates a new location service with real provider clients
 func NewLocationService() LocationService {
 	return &locationService{
-		elevationProvider: openmeteo.NewElevationClient(),
+		elevationProvider: usgs.NewClient(),
 		locationProvider:  openstreetmap.NewClient(),
 	}
 }
@@ -48,7 +48,7 @@ func NewLocationServiceWithProviders(
 func (s *locationService) GetForecastPoint(latitude, longitude float64) (*types.ForecastPoint, error) {
 	var (
 		wg            sync.WaitGroup
-		elevationResp *openmeteo.ElevationAPIResponse
+		elevationResp *usgs.ElevationPointAPIResponse
 		locationResp  *openstreetmap.LookupAPIResponse
 		elevationErr  error
 		locationErr   error
@@ -60,7 +60,7 @@ func (s *locationService) GetForecastPoint(latitude, longitude float64) (*types.
 	// Get elevation data
 	go func() {
 		defer wg.Done()
-		elevationResp, elevationErr = s.elevationProvider.GetElevation(latitude, longitude)
+		elevationResp, elevationErr = s.elevationProvider.GetElevationPoint(latitude, longitude)
 		if elevationErr != nil {
 			elevationErr = fmt.Errorf("failed to get elevation: %w", elevationErr)
 		}
@@ -69,7 +69,7 @@ func (s *locationService) GetForecastPoint(latitude, longitude float64) (*types.
 	// Get location data
 	go func() {
 		defer wg.Done()
-		locationResp, locationErr = s.locationProvider.GetElevation(latitude, longitude)
+		locationResp, locationErr = s.locationProvider.Lookup(latitude, longitude)
 		if locationErr != nil {
 			locationErr = fmt.Errorf("failed to get location: %w", locationErr)
 		}
@@ -109,17 +109,13 @@ func (s *locationService) GetForecastPoint(latitude, longitude float64) (*types.
 }
 
 // translateElevation converts an OpenMeteo elevation response to domain Elevation type
-func (s *locationService) translateElevation(resp *openmeteo.ElevationAPIResponse) (types.Elevation, error) {
+func (s *locationService) translateElevation(resp *usgs.ElevationPointAPIResponse) (types.Elevation, error) {
 	if resp == nil {
 		return types.Elevation{}, fmt.Errorf("elevation response is nil")
 	}
 
-	if len(resp.Elevation) == 0 {
-		return types.Elevation{}, fmt.Errorf("elevation response contains no data")
-	}
-
 	// OpenMeteo returns elevation in meters
-	return types.NewElevationFromMeters(resp.Elevation[0]), nil
+	return types.NewElevationFromMeters(resp.Value), nil
 }
 
 // translateLocationInfo converts an OpenStreetMap reverse lookup response to domain LocationInfo type

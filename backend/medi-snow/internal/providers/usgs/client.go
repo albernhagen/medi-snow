@@ -1,4 +1,4 @@
-package openmeteo
+package usgs
 
 import (
 	"encoding/json"
@@ -8,25 +8,25 @@ import (
 	"net/url"
 )
 
-// API Docs: https://open-meteo.com/en/docs/elevation-api
-// Sample request: https://api.open-meteo.com/v1/elevation?latitude=39.1178&longitude=-106.4452
+// API Docs: https://epqs.nationalmap.gov/v1/docs
+// Sample request: https://epqs.nationalmap.gov/v1/json?x=-107.65840&y=39.0639&units=Feet
 const (
-	baseElevationURL = "https://api.open-meteo.com/v1/elevation"
+	baseElevationURL = "https://epqs.nationalmap.gov/v1/json"
 )
 
-type ElevationClient struct {
+type Client struct {
 	httpClient *http.Client
 	baseURL    string
 }
 
-func NewElevationClient() *ElevationClient {
-	return &ElevationClient{
+func NewClient() *Client {
+	return &Client{
 		httpClient: &http.Client{},
 		baseURL:    baseElevationURL,
 	}
 }
 
-func (c *ElevationClient) GetElevation(latitude, longitude float64) (*ElevationAPIResponse, error) {
+func (c *Client) GetElevationPoint(latitude, longitude float64) (*ElevationPointAPIResponse, error) {
 	// Build URL with query parameters
 	u, err := url.Parse(c.baseURL)
 	if err != nil {
@@ -34,8 +34,9 @@ func (c *ElevationClient) GetElevation(latitude, longitude float64) (*ElevationA
 	}
 
 	q := u.Query()
-	q.Set("latitude", fmt.Sprintf("%f", latitude))
-	q.Set("longitude", fmt.Sprintf("%f", longitude))
+	q.Set("y", fmt.Sprintf("%f", latitude))
+	q.Set("x", fmt.Sprintf("%f", longitude))
+	q.Set("units", "Feet")
 	u.RawQuery = q.Encode()
 
 	// Make the HTTP request
@@ -53,7 +54,7 @@ func (c *ElevationClient) GetElevation(latitude, longitude float64) (*ElevationA
 	}
 
 	// Parse the JSON response
-	var apiResp ElevationAPIResponse
+	var apiResp ElevationPointAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}

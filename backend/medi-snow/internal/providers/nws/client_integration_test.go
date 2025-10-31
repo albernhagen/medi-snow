@@ -17,7 +17,7 @@ func TestClient_GetElevation_Integration(t *testing.T) {
 	t.Logf("Making API call to OpenStreetMap Nominatim API...")
 	t.Logf("Coordinates: lat=%f, lon=%f", lat, lon)
 
-	resp, err := client.Lookup(lat, lon)
+	resp, err := client.GetElevation(lat, lon)
 	if err != nil {
 		t.Fatalf("Failed to get location data: %v", err)
 	}
