@@ -1,4 +1,4 @@
-package openstreetmap
+package nws
 
 import (
 	"encoding/json"
@@ -8,10 +8,12 @@ import (
 	"net/url"
 )
 
-// API Docs: https://nominatim.org/release-docs/develop/api/Lookup/
-// Sample request: https://nominatim.openstreetmap.org/reverse?lat=39.11&lon=-107.65&format=json
+// API Docs: https://www.weather.gov/documentation/services-web-api
+// Sample requests:
+// - https://api.weather.gov/points/39.1154,-107.65840
+// - https://api.weather.gov/products/types/AFD/locations/GJT/latest
 const (
-	baseURL = "https://nominatim.openstreetmap.org/reverse"
+	baseURL = "https://api.weather.gov"
 )
 
 type Client struct {
@@ -26,18 +28,14 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) GetElevation(latitude, longitude float64) (*LookupAPIResponse, error) {
+func (c *Client) GetPoint(latitude, longitude float64) (*PointAPIResponse, error) {
 	// Build URL with query parameters
 	u, err := url.Parse(c.baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse base URL: %w", err)
 	}
 
-	q := u.Query()
-	q.Set("lat", fmt.Sprintf("%f", latitude))
-	q.Set("lon", fmt.Sprintf("%f", longitude))
-	q.Set("format", "json")
-	u.RawQuery = q.Encode()
+	u.Path = fmt.Sprintf("/points/%f,%f", latitude, longitude)
 
 	// Make the HTTP request
 	resp, err := c.httpClient.Get(u.String())
@@ -54,7 +52,39 @@ func (c *Client) GetElevation(latitude, longitude float64) (*LookupAPIResponse, 
 	}
 
 	// Parse the JSON response
-	var apiResp LookupAPIResponse
+	var apiResp PointAPIResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &apiResp, nil
+}
+
+func (c *Client) GetAFD(locationId string) (*AFDAPIResponse, error) {
+	// Build URL with query parameters
+	u, err := url.Parse(c.baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse base URL: %w", err)
+	}
+
+	u.Path = fmt.Sprintf("/products/types/AFD/locations/%s/latest", locationId)
+
+	// Make the HTTP request
+	resp, err := c.httpClient.Get(u.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch: %w", err)
+	}
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("fetch returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse the JSON response
+	var apiResp AFDAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}

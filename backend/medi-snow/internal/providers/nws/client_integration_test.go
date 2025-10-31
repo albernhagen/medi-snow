@@ -1,25 +1,25 @@
 //go:build integration
 
-package openstreetmap
+package nws
 
 import (
 	"encoding/json"
 	"testing"
 )
 
-func TestClient_GetElevation_Integration(t *testing.T) {
+func TestClient_GetPoint_Integration(t *testing.T) {
 	// Test coordinates: Aspen, CO area
 	lat := 39.11539
 	lon := -107.65840
 
 	client := NewClient()
 
-	t.Logf("Making API call to OpenStreetMap Nominatim API...")
+	t.Logf("Making API call to NWS Points API...")
 	t.Logf("Coordinates: lat=%f, lon=%f", lat, lon)
 
-	resp, err := client.GetElevation(lat, lon)
+	resp, err := client.GetPoint(lat, lon)
 	if err != nil {
-		t.Fatalf("Failed to get location data: %v", err)
+		t.Fatalf("Failed to get point data: %v", err)
 	}
 
 	// Pretty print the raw response
@@ -35,43 +35,140 @@ func TestClient_GetElevation_Integration(t *testing.T) {
 		t.Fatal("Response is nil")
 	}
 
-	t.Logf("Location Details:")
-	t.Logf("  Place ID: %d", resp.PlaceId)
-	t.Logf("  Display Name: %s", resp.DisplayName)
+	t.Logf("Point Details:")
 	t.Logf("  Type: %s", resp.Type)
-	t.Logf("  Class: %s", resp.Class)
+	t.Logf("  CWA: %s", resp.Properties.Cwa)
+	t.Logf("  Forecast Office: %s", resp.Properties.ForecastOffice)
+	t.Logf("  Grid ID: %s", resp.Properties.GridId)
+	t.Logf("  Grid X: %d", resp.Properties.GridX)
+	t.Logf("  Grid Y: %d", resp.Properties.GridY)
+	t.Logf("  Time Zone: %s", resp.Properties.TimeZone)
 
-	if resp.Address.County != "" {
-		t.Logf("  County: %s", resp.Address.County)
+	// Verify relative location
+	if resp.Properties.RelativeLocation.Properties.City != "" {
+		t.Logf("  City: %s", resp.Properties.RelativeLocation.Properties.City)
 	}
-	if resp.Address.State != "" {
-		t.Logf("  State: %s", resp.Address.State)
-	}
-	if resp.Address.Country != "" {
-		t.Logf("  Country: %s", resp.Address.Country)
-	}
-
-	// Verify coordinates match
-	if resp.Lat == "" || resp.Lon == "" {
-		t.Error("Lat/Lon fields are empty")
+	if resp.Properties.RelativeLocation.Properties.State != "" {
+		t.Logf("  State: %s", resp.Properties.RelativeLocation.Properties.State)
 	}
 
-	t.Logf("  Returned Coordinates: lat=%s, lon=%s", resp.Lat, resp.Lon)
+	// Verify geometry
+	if resp.Geometry.Type == "" {
+		t.Error("Geometry Type is empty")
+	}
+	if len(resp.Geometry.Coordinates) == 0 {
+		t.Error("Geometry Coordinates are empty")
+	} else {
+		t.Logf("  Coordinates: %v", resp.Geometry.Coordinates)
+	}
 
 	// Basic sanity checks
-	if resp.PlaceId == 0 {
-		t.Error("PlaceId is 0")
+	if resp.Properties.GridId == "" {
+		t.Error("GridId is empty")
 	}
 
-	if resp.DisplayName == "" {
-		t.Error("DisplayName is empty")
+	if resp.Properties.Cwa == "" {
+		t.Error("CWA is empty")
 	}
 
-	if len(resp.Boundingbox) != 4 {
-		t.Errorf("Expected boundingbox to have 4 values, got %d", len(resp.Boundingbox))
+	if resp.Properties.Forecast == "" {
+		t.Error("Forecast URL is empty")
 	} else {
-		t.Logf("  Bounding Box: %v", resp.Boundingbox)
+		t.Logf("  Forecast URL: %s", resp.Properties.Forecast)
 	}
 
-	t.Log("✓ API call successful, response structure valid")
+	if resp.Properties.ForecastHourly == "" {
+		t.Error("ForecastHourly URL is empty")
+	} else {
+		t.Logf("  Forecast Hourly URL: %s", resp.Properties.ForecastHourly)
+	}
+
+	t.Log("✓ GetPoint API call successful, response structure valid")
+}
+
+func TestClient_GetAFD_Integration(t *testing.T) {
+	// Use Grand Junction, CO office (GJT) - covers Aspen area
+	locationId := "GJT"
+
+	client := NewClient()
+
+	t.Logf("Making API call to NWS AFD API...")
+	t.Logf("Location ID: %s", locationId)
+
+	resp, err := client.GetAFD(locationId)
+	if err != nil {
+		t.Fatalf("Failed to get AFD data: %v", err)
+	}
+
+	// Pretty print the raw response (excluding productText which can be very long)
+	type afdSummary struct {
+		Id              string `json:"@id"`
+		Id1             string `json:"id"`
+		WmoCollectiveId string `json:"wmoCollectiveId"`
+		IssuingOffice   string `json:"issuingOffice"`
+		IssuanceTime    string `json:"issuanceTime"`
+		ProductCode     string `json:"productCode"`
+		ProductName     string `json:"productName"`
+		ProductTextLen  int    `json:"productTextLength"`
+	}
+
+	summary := afdSummary{
+		Id:              resp.Id,
+		Id1:             resp.Id1,
+		WmoCollectiveId: resp.WmoCollectiveId,
+		IssuingOffice:   resp.IssuingOffice,
+		IssuanceTime:    resp.IssuanceTime.String(),
+		ProductCode:     resp.ProductCode,
+		ProductName:     resp.ProductName,
+		ProductTextLen:  len(resp.ProductText),
+	}
+
+	rawJSON, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		t.Fatalf("Failed to marshal response: %v", err)
+	}
+
+	t.Logf("Raw API Response Summary:\n%s", string(rawJSON))
+
+	// Verify response structure
+	if resp == nil {
+		t.Fatal("Response is nil")
+	}
+
+	t.Logf("AFD Details:")
+	t.Logf("  Product Code: %s", resp.ProductCode)
+	t.Logf("  Product Name: %s", resp.ProductName)
+	t.Logf("  Issuing Office: %s", resp.IssuingOffice)
+	t.Logf("  Issuance Time: %s", resp.IssuanceTime)
+	t.Logf("  Product Text Length: %d characters", len(resp.ProductText))
+
+	// Basic sanity checks
+	if resp.ProductCode == "" {
+		t.Error("ProductCode is empty")
+	}
+
+	if resp.ProductName == "" {
+		t.Error("ProductName is empty")
+	}
+
+	if resp.IssuingOffice == "" {
+		t.Error("IssuingOffice is empty")
+	}
+
+	if resp.ProductText == "" {
+		t.Error("ProductText is empty")
+	} else {
+		// Show first 200 characters of product text
+		previewLen := 200
+		if len(resp.ProductText) < previewLen {
+			previewLen = len(resp.ProductText)
+		}
+		t.Logf("  Product Text Preview: %s...", resp.ProductText[:previewLen])
+	}
+
+	if resp.IssuanceTime.IsZero() {
+		t.Error("IssuanceTime is zero")
+	}
+
+	t.Log("✓ GetAFD API call successful, response structure valid")
 }

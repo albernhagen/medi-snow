@@ -1,8 +1,8 @@
-package openstreetmap
+package nws
 
 import "time"
 
-type PointsAPIResponse struct {
+type PointAPIResponse struct {
 	Context  []interface{} `json:"@context"`
 	Id       string        `json:"id"`
 	Type     string        `json:"type"`
