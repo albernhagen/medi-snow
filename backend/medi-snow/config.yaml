@@ -1,0 +1,4 @@
+# Medi-Snow API Configuration
+
+server:
+  port: 8080
