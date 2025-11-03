@@ -4,7 +4,7 @@ package main
 const PORT = "8080"
 
 func main() {
-	// Create app with the provider
+	// Create app
 	app := NewApp()
 
 	// Start server
