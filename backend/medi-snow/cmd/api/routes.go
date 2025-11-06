@@ -15,4 +15,14 @@ func (app *App) registerRoutes() {
 		Description: "Check if the API is running",
 		Tags:        []string{"health"},
 	}, app.handlePing)
+
+	// Location endpoints
+	huma.Register(app.api, huma.Operation{
+		OperationID: "get-forecast-point",
+		Method:      "GET",
+		Path:        "/location/forecast-point",
+		Summary:     "Get forecast point data",
+		Description: "Retrieve comprehensive location data including coordinates, elevation, and location metadata for a given latitude and longitude",
+		Tags:        []string{"location"},
+	}, app.handleGetForecastPoint)
 }

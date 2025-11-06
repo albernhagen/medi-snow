@@ -2,30 +2,36 @@ package location
 
 import (
 	"fmt"
-	"skadi-backend/internal/providers/openstreetmap"
-	"skadi-backend/internal/providers/usgs"
-	"skadi-backend/internal/types"
+	"medi-snow/internal/providers/openstreetmap"
+	"medi-snow/internal/providers/usgs"
+	"medi-snow/internal/types"
 	"sync"
 )
+
+// Service provides location and elevation data for weather forecasting
+type Service interface {
+	// GetForecastPoint retrieves comprehensive location data for a given coordinate
+	GetForecastPoint(latitude, longitude float64) (*types.ForecastPoint, error)
+}
 
 // ElevationProvider defines the interface for elevation data providers
 type ElevationProvider interface {
 	GetElevationPoint(latitude, longitude float64) (*usgs.ElevationPointAPIResponse, error)
 }
 
-// LocationProvider defines the interface for location data providers
-type LocationProvider interface {
+// ReverseGeocodeProvider defines the interface for location data providers
+type ReverseGeocodeProvider interface {
 	Lookup(latitude, longitude float64) (*openstreetmap.LookupAPIResponse, error)
 }
 
-// locationService implements the LocationService interface
+// locationService implements the Service interface
 type locationService struct {
 	elevationProvider ElevationProvider
-	locationProvider  LocationProvider
+	locationProvider  ReverseGeocodeProvider
 }
 
 // NewLocationService creates a new location service with real provider clients
-func NewLocationService() LocationService {
+func NewLocationService() Service {
 	return &locationService{
 		elevationProvider: usgs.NewClient(),
 		locationProvider:  openstreetmap.NewClient(),
@@ -36,8 +42,8 @@ func NewLocationService() LocationService {
 // This is useful for testing with mock providers
 func NewLocationServiceWithProviders(
 	elevationProvider ElevationProvider,
-	locationProvider LocationProvider,
-) LocationService {
+	locationProvider ReverseGeocodeProvider,
+) Service {
 	return &locationService{
 		elevationProvider: elevationProvider,
 		locationProvider:  locationProvider,
@@ -115,7 +121,7 @@ func (s *locationService) translateElevation(resp *usgs.ElevationPointAPIRespons
 	}
 
 	// OpenMeteo returns elevation in meters
-	return types.NewElevationFromMeters(resp.Value), nil
+	return types.NewElevationFromFeet(resp.Value), nil
 }
 
 // translateLocationInfo converts an OpenStreetMap reverse lookup response to domain LocationInfo type

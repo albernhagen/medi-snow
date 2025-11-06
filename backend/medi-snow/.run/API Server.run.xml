@@ -3,7 +3,7 @@
     <module name="medi-snow" />
     <working_directory value="$PROJECT_DIR$" />
     <kind value="PACKAGE" />
-    <package value="skadi-backend/cmd/api" />
+    <package value="medi-snow/cmd/api" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/cmd/api/main.go" />
     <method v="2" />

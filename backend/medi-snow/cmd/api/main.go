@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"skadi-backend/internal/config"
+	"medi-snow/internal/config"
 )
 
 func main() {

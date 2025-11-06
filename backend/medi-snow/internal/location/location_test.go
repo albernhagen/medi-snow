@@ -2,9 +2,9 @@ package location
 
 import (
 	"errors"
-	"skadi-backend/internal/providers/openstreetmap"
-	"skadi-backend/internal/providers/usgs"
-	"skadi-backend/internal/types"
+	"medi-snow/internal/providers/openstreetmap"
+	"medi-snow/internal/providers/usgs"
+	"medi-snow/internal/types"
 	"strings"
 	"testing"
 )

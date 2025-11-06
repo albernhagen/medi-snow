@@ -1,6 +1,7 @@
 package main
 
 import (
+	"medi-snow/internal/location"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -9,8 +10,9 @@ import (
 
 // App encapsulates application dependencies
 type App struct {
-	mux *http.ServeMux
-	api huma.API
+	mux             *http.ServeMux
+	api             huma.API
+	locationService location.Service
 }
 
 // NewApp creates a new application with injected dependencies
@@ -32,8 +34,9 @@ func NewApp() *App {
 	api := humago.New(mux, config)
 
 	app := &App{
-		mux: mux,
-		api: api,
+		mux:             mux,
+		api:             api,
+		locationService: location.NewLocationService(),
 	}
 
 	// Register routes
