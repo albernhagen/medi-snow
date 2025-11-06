@@ -2,6 +2,9 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -9,11 +12,18 @@ import (
 // Config holds all configuration for the application
 type Config struct {
 	Server ServerConfig
+	Log    LogConfig
 }
 
 // ServerConfig holds server-specific configuration
 type ServerConfig struct {
 	Port int
+}
+
+// LogConfig holds logging configuration
+type LogConfig struct {
+	Level  string // debug, info, warn, error
+	Format string // json, text
 }
 
 // Load reads configuration from file and environment variables
@@ -27,6 +37,8 @@ func Load() (*Config, error) {
 
 	// Set defaults
 	viper.SetDefault("server.port", 8080)
+	viper.SetDefault("log.level", "info")
+	viper.SetDefault("log.format", "text")
 
 	// Read from environment variables
 	viper.SetEnvPrefix("MEDI_SNOW")
@@ -52,4 +64,38 @@ func Load() (*Config, error) {
 // GetServerAddr returns the server address in the format ":port"
 func (c *Config) GetServerAddr() string {
 	return fmt.Sprintf(":%d", c.Server.Port)
+}
+
+// NewLogger creates a new slog.Logger based on the configuration
+func (c *Config) NewLogger() *slog.Logger {
+	// Parse log level
+	var level slog.Level
+	switch strings.ToLower(c.Log.Level) {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn", "warning":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+
+	// Create handler options
+	opts := &slog.HandlerOptions{
+		Level: level,
+	}
+
+	// Choose handler based on format
+	var handler slog.Handler
+	switch strings.ToLower(c.Log.Format) {
+	case "json":
+		handler = slog.NewJSONHandler(os.Stdout, opts)
+	default: // "text" or anything else
+		handler = slog.NewTextHandler(os.Stdout, opts)
+	}
+
+	return slog.New(handler)
 }

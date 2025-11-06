@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"medi-snow/internal/config"
 )
 
@@ -12,12 +13,17 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
+	// Initialize logger
+	logger := cfg.NewLogger()
+	slog.SetDefault(logger) // Set as default logger for the application
+
 	// Create app
-	app := NewApp()
+	app := NewApp(logger)
 
 	// Start server
-	log.Printf("Starting server on %s", cfg.GetServerAddr())
+	logger.Info("starting server", "addr", cfg.GetServerAddr())
 	if err := app.Run(cfg.GetServerAddr()); err != nil {
-		log.Fatalf("Server failed: %v", err)
+		logger.Error("server failed", "error", err)
+		log.Fatal(err)
 	}
 }

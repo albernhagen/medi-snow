@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log/slog"
 	"medi-snow/internal/location"
 	"net/http"
 
@@ -12,11 +13,12 @@ import (
 type App struct {
 	mux             *http.ServeMux
 	api             huma.API
+	logger          *slog.Logger
 	locationService location.Service
 }
 
 // NewApp creates a new application with injected dependencies
-func NewApp() *App {
+func NewApp(logger *slog.Logger) *App {
 	// Create standard library HTTP mux
 	mux := http.NewServeMux()
 
@@ -36,8 +38,11 @@ func NewApp() *App {
 	app := &App{
 		mux:             mux,
 		api:             api,
-		locationService: location.NewLocationService(),
+		logger:          logger,
+		locationService: location.NewLocationService(logger),
 	}
+
+	logger.Info("application initialized")
 
 	// Register routes
 	app.registerRoutes()

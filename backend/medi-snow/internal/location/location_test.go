@@ -2,9 +2,11 @@ package location
 
 import (
 	"errors"
+	"log/slog"
 	"medi-snow/internal/providers/openstreetmap"
 	"medi-snow/internal/providers/usgs"
 	"medi-snow/internal/types"
+	"os"
 	"strings"
 	"testing"
 )
@@ -16,7 +18,7 @@ type mockElevationProvider struct {
 	err      error
 }
 
-func (m *mockElevationProvider) GetElevation(latitude, longitude float64) (*usgs.ElevationPointAPIResponse, error) {
+func (m *mockElevationProvider) GetElevationPoint(latitude, longitude float64) (*usgs.ElevationPointAPIResponse, error) {
 	return m.response, m.err
 }
 
@@ -47,7 +49,7 @@ func TestLocationService_GetForecastPoint(t *testing.T) {
 			lat:  39.11539,
 			lon:  -107.65840,
 			elevationResponse: &usgs.ElevationPointAPIResponse{
-				Elevation: []float64{2743.5},
+				Value: 2743.5,
 			},
 			locationResponse: &openstreetmap.LookupAPIResponse{
 				Name:        "Aspen",
@@ -76,8 +78,8 @@ func TestLocationService_GetForecastPoint(t *testing.T) {
 				if fp.Coordinates.Longitude != -107.65840 {
 					t.Errorf("Longitude = %v, want %v", fp.Coordinates.Longitude, -107.65840)
 				}
-				if fp.Elevation.Meters != 2743.5 {
-					t.Errorf("Elevation.Meters = %v, want %v", fp.Elevation.Meters, 2743.5)
+				if fp.Elevation.Feet != 2743.5 {
+					t.Errorf("Elevation.Feet = %v, want %v", fp.Elevation.Feet, 2743.5)
 				}
 				if fp.Location.Name != "Aspen" {
 					t.Errorf("Location.Name = %v, want %v", fp.Location.Name, "Aspen")
@@ -104,25 +106,12 @@ func TestLocationService_GetForecastPoint(t *testing.T) {
 			lat:  39.11539,
 			lon:  -107.65840,
 			elevationResponse: &usgs.ElevationPointAPIResponse{
-				Elevation: []float64{2743.5},
+				Value: 2743.5,
 			},
 			locationResponse: nil,
 			locationErr:      errors.New("location API error"),
 			wantErr:          true,
 			errContains:      "failed to get location",
-		},
-		{
-			name: "elevation adapter error - empty array",
-			lat:  39.11539,
-			lon:  -107.65840,
-			elevationResponse: &usgs.ElevationPointAPIResponse{
-				Elevation: []float64{},
-			},
-			locationResponse: &openstreetmap.LookupAPIResponse{
-				DisplayName: "Test Location",
-			},
-			wantErr:     true,
-			errContains: "elevation response contains no data",
 		},
 		{
 			name:              "elevation adapter error - nil response",
@@ -149,8 +138,17 @@ func TestLocationService_GetForecastPoint(t *testing.T) {
 				err:      tt.locationErr,
 			}
 
+			// Create test logger that discards output
+			logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+				Level: slog.LevelError, // Only log errors in tests
+			}))
+
 			// Create service with mocks
-			service := NewLocationServiceWithProviders(elevProvider, locProvider)
+			service := &locationService{
+				elevationProvider: elevProvider,
+				locationProvider:  locProvider,
+				logger:            logger,
+			}
 
 			// Call GetForecastPoint
 			got, err := service.GetForecastPoint(tt.lat, tt.lon)

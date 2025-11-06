@@ -2,6 +2,7 @@ package location
 
 import (
 	"fmt"
+	"log/slog"
 	"medi-snow/internal/providers/openstreetmap"
 	"medi-snow/internal/providers/usgs"
 	"medi-snow/internal/types"
@@ -28,13 +29,15 @@ type ReverseGeocodeProvider interface {
 type locationService struct {
 	elevationProvider ElevationProvider
 	locationProvider  ReverseGeocodeProvider
+	logger            *slog.Logger
 }
 
 // NewLocationService creates a new location service with real provider clients
-func NewLocationService() Service {
+func NewLocationService(logger *slog.Logger) Service {
 	return &locationService{
-		elevationProvider: usgs.NewClient(),
-		locationProvider:  openstreetmap.NewClient(),
+		elevationProvider: usgs.NewClient(logger),
+		locationProvider:  openstreetmap.NewClient(logger),
+		logger:            logger.With("component", "location-service"),
 	}
 }
 
@@ -52,6 +55,11 @@ func NewLocationServiceWithProviders(
 
 // GetForecastPoint retrieves comprehensive location data by calling providers in parallel
 func (s *locationService) GetForecastPoint(latitude, longitude float64) (*types.ForecastPoint, error) {
+	s.logger.Debug("getting forecast point",
+		"latitude", latitude,
+		"longitude", longitude,
+	)
+
 	var (
 		wg            sync.WaitGroup
 		elevationResp *usgs.ElevationPointAPIResponse
@@ -86,13 +94,29 @@ func (s *locationService) GetForecastPoint(latitude, longitude float64) (*types.
 
 	// Check for errors
 	if elevationErr != nil && locationErr != nil {
+		s.logger.Error("multiple provider errors",
+			"latitude", latitude,
+			"longitude", longitude,
+			"elevation_error", elevationErr,
+			"location_error", locationErr,
+		)
 		return nil, fmt.Errorf("multiple errors: elevation: %v; location: %v", elevationErr, locationErr)
 	}
 
 	if elevationErr != nil {
+		s.logger.Error("elevation provider error",
+			"latitude", latitude,
+			"longitude", longitude,
+			"error", elevationErr,
+		)
 		return nil, elevationErr
 	}
 	if locationErr != nil {
+		s.logger.Error("location provider error",
+			"latitude", latitude,
+			"longitude", longitude,
+			"error", locationErr,
+		)
 		return nil, locationErr
 	}
 
@@ -107,11 +131,19 @@ func (s *locationService) GetForecastPoint(latitude, longitude float64) (*types.
 		return nil, err
 	}
 
-	return &types.ForecastPoint{
+	forecastPoint := &types.ForecastPoint{
 		Coordinates: types.NewCoords(latitude, longitude),
 		Elevation:   elevation,
 		Location:    locationInfo,
-	}, nil
+	}
+
+	s.logger.Debug("successfully retrieved forecast point",
+		"latitude", latitude,
+		"longitude", longitude,
+		"location_name", locationInfo.Name,
+	)
+
+	return forecastPoint, nil
 }
 
 // translateElevation converts an OpenMeteo elevation response to domain Elevation type

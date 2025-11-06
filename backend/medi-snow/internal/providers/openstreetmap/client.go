@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 )
@@ -17,12 +18,14 @@ const (
 type Client struct {
 	httpClient *http.Client
 	baseURL    string
+	logger     *slog.Logger
 }
 
-func NewClient() *Client {
+func NewClient(logger *slog.Logger) *Client {
 	return &Client{
 		httpClient: &http.Client{},
 		baseURL:    baseURL,
+		logger:     logger.With("component", "openstreetmap-client"),
 	}
 }
 
@@ -39,9 +42,20 @@ func (c *Client) Lookup(latitude, longitude float64) (*LookupAPIResponse, error)
 	q.Set("format", "json")
 	u.RawQuery = q.Encode()
 
+	c.logger.Debug("fetching OpenStreetMap location data",
+		"latitude", latitude,
+		"longitude", longitude,
+		"url", u.String(),
+	)
+
 	// Make the HTTP request
 	resp, err := c.httpClient.Get(u.String())
 	if err != nil {
+		c.logger.Error("failed to fetch OpenStreetMap data",
+			"latitude", latitude,
+			"longitude", longitude,
+			"error", err,
+		)
 		return nil, fmt.Errorf("failed to fetch: %w", err)
 	}
 	defer func(Body io.ReadCloser) {
@@ -50,14 +64,31 @@ func (c *Client) Lookup(latitude, longitude float64) (*LookupAPIResponse, error)
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
+		c.logger.Error("OpenStreetMap API returned error",
+			"status_code", resp.StatusCode,
+			"latitude", latitude,
+			"longitude", longitude,
+			"response_body", string(body),
+		)
 		return nil, fmt.Errorf("fetch returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	// Parse the JSON response
 	var apiResp LookupAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+		c.logger.Error("failed to decode OpenStreetMap response",
+			"latitude", latitude,
+			"longitude", longitude,
+			"error", err,
+		)
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
+
+	c.logger.Debug("successfully fetched OpenStreetMap location data",
+		"latitude", latitude,
+		"longitude", longitude,
+		"display_name", apiResp.DisplayName,
+	)
 
 	return &apiResp, nil
 }
