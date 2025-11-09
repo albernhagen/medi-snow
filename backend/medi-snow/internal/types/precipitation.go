@@ -1,7 +1,5 @@
 package types
 
-const InchesToMm = 25.4
-
 type Precipitation struct {
 	AmountInInches float64
 	AmountInMm     float64

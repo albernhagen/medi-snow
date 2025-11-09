@@ -1,7 +1,5 @@
 package types
 
-const MphToKph = 1.60934
-
 type Wind struct {
 	SpeedInMph        float64
 	SpeedInKph        float64
