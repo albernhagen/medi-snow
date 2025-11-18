@@ -15,6 +15,7 @@ type App struct {
 	router          *gin.Engine
 	logger          *slog.Logger
 	locationService location.Service
+	cfg             *config.Config
 }
 
 // NewApp creates a new application with injected dependencies
@@ -32,6 +33,7 @@ func NewApp(cfg *config.Config, logger *slog.Logger) *App {
 		router:          router,
 		logger:          logger,
 		locationService: location.NewLocationService(logger),
+		cfg:             cfg,
 	}
 
 	// Register routes

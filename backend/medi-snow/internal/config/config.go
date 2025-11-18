@@ -14,6 +14,7 @@ import (
 type Config struct {
 	Server ServerConfig
 	Log    LogConfig
+	App    AppConfig
 }
 
 // ServerConfig holds server-specific configuration
@@ -26,6 +27,11 @@ type ServerConfig struct {
 type LogConfig struct {
 	Level  string // debug, info, warn, error
 	Format string // json, text
+}
+
+// AppConfig holds application-specific configuration
+type AppConfig struct {
+	ForecastDays int // Number of days to forecast
 }
 
 // Load reads configuration from file and environment variables
@@ -42,6 +48,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("server.ginmode", "release")
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.format", "text")
+	viper.SetDefault("app.forecastDays", 16)
 
 	// Read from environment variables
 	viper.SetEnvPrefix("MEDI_SNOW")

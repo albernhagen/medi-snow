@@ -44,7 +44,7 @@ func (w ModelValues[T]) HasModel(model string) bool {
 	return ok
 }
 
-type WeatherForecast struct {
+type Forecast struct {
 	Timestamp              time.Time
 	Timezone               string
 	AreaForecastDiscussion string
