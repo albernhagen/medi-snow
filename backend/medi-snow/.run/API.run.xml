@@ -1,11 +1,13 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="API Server" type="GoApplicationRunConfiguration" factoryName="Go Application">
+  <configuration default="false" name="API" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="medi-snow" />
-    <working_directory value="$PROJECT_DIR$" />
+    <working_directory value="$PROJECT_DIR$/cmd/api" />
     <kind value="PACKAGE" />
     <package value="medi-snow/cmd/api" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/cmd/api/main.go" />
-    <method v="2" />
+    <method v="2">
+      <option name="GoBeforeRunTask" command="generate" />
+    </method>
   </configuration>
 </component>

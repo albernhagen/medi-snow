@@ -1,34 +1,26 @@
 package main
 
 import (
-	"github.com/danielgtaylor/huma/v2"
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // registerRoutes sets up all API endpoints
 func (app *App) registerRoutes() {
-	app.logger.Info("registering routes")
-
 	// Health check endpoint
-	huma.Register(app.api, huma.Operation{
-		OperationID: "ping",
-		Method:      "GET",
-		Path:        "/ping",
-		Summary:     "Ping health check",
-		Description: "Check if the API is running",
-		Tags:        []string{"health"},
-	}, app.handlePing)
-	app.logger.Debug("registered route", "method", "GET", "path", "/ping")
+	app.router.GET("/ping", app.handlePing)
 
 	// Location endpoints
-	huma.Register(app.api, huma.Operation{
-		OperationID: "get-forecast-point",
-		Method:      "GET",
-		Path:        "/location/forecast-point",
-		Summary:     "Get forecast point data",
-		Description: "Retrieve comprehensive location data including coordinates, elevation, and location metadata for a given latitude and longitude",
-		Tags:        []string{"location"},
-	}, app.handleGetForecastPoint)
-	app.logger.Debug("registered route", "method", "GET", "path", "/location/forecast-point")
+	app.router.GET("/location/forecast-point", app.handleGetForecastPoint)
 
-	app.logger.Info("all routes registered")
+	// Swagger documentation
+	app.router.GET("/swagger/*any", func(c *gin.Context) {
+		path := c.Param("any")
+		if path == "/" {
+			c.Redirect(301, "/swagger/index.html")
+			return
+		}
+		ginSwagger.WrapHandler(swaggerFiles.Handler)(c)
+	})
 }

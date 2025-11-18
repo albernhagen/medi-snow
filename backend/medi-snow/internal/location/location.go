@@ -1,12 +1,20 @@
 package location
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"medi-snow/internal/providers/openstreetmap"
 	"medi-snow/internal/providers/usgs"
 	"medi-snow/internal/types"
 	"sync"
+)
+
+var (
+	// ErrInvalidLatitude indicates latitude is out of valid range
+	ErrInvalidLatitude = errors.New("latitude must be between -90 and 90")
+	// ErrInvalidLongitude indicates longitude is out of valid range
+	ErrInvalidLongitude = errors.New("longitude must be between -180 and 180")
 )
 
 // Service provides location and elevation data for weather forecasting
@@ -55,6 +63,16 @@ func NewLocationServiceWithProviders(
 
 // GetForecastPoint retrieves comprehensive location data by calling providers in parallel
 func (s *locationService) GetForecastPoint(latitude, longitude float64) (*types.ForecastPoint, error) {
+	// Validate coordinates
+	if err := validateCoordinates(latitude, longitude); err != nil {
+		s.logger.Warn("invalid coordinates",
+			"latitude", latitude,
+			"longitude", longitude,
+			"error", err,
+		)
+		return nil, err
+	}
+
 	s.logger.Debug("getting forecast point",
 		"latitude", latitude,
 		"longitude", longitude,
@@ -175,4 +193,17 @@ func (s *locationService) translateLocationInfo(resp *openstreetmap.LookupAPIRes
 		Country:     resp.Address.Country,
 		CountryCode: resp.Address.CountryCode,
 	}, nil
+}
+
+// validateCoordinates checks if latitude and longitude are within valid ranges
+func validateCoordinates(latitude, longitude float64) error {
+	if latitude < -90 || latitude > 90 {
+		return fmt.Errorf("%w: got %.6f", ErrInvalidLatitude, latitude)
+	}
+
+	if longitude < -180 || longitude > 180 {
+		return fmt.Errorf("%w: got %.6f", ErrInvalidLongitude, longitude)
+	}
+
+	return nil
 }

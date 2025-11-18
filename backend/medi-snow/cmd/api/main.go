@@ -1,9 +1,13 @@
 package main
 
+//go:generate go run github.com/swaggo/swag/cmd/swag@latest init -g docs.go -o ../../docs --parseDependency
+
 import (
 	"log"
 	"log/slog"
 	"medi-snow/internal/config"
+
+	_ "medi-snow/docs" // Import generated docs
 )
 
 func main() {
@@ -18,7 +22,7 @@ func main() {
 	slog.SetDefault(logger) // Set as default logger for the application
 
 	// Create app
-	app := NewApp(logger)
+	app := NewApp(cfg, logger)
 
 	// Start server
 	logger.Info("starting server", "addr", cfg.GetServerAddr())

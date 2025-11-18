@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -17,7 +18,8 @@ type Config struct {
 
 // ServerConfig holds server-specific configuration
 type ServerConfig struct {
-	Port int
+	Port    int
+	GinMode string // debug, release, test
 }
 
 // LogConfig holds logging configuration
@@ -37,6 +39,7 @@ func Load() (*Config, error) {
 
 	// Set defaults
 	viper.SetDefault("server.port", 8080)
+	viper.SetDefault("server.ginmode", "release")
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.format", "text")
 
@@ -47,7 +50,8 @@ func Load() (*Config, error) {
 	// Read config file
 	if err := viper.ReadInConfig(); err != nil {
 		// It's okay if config file doesn't exist, we have defaults
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if !errors.As(err, &configFileNotFoundError) {
 			return nil, fmt.Errorf("failed to read config file: %w", err)
 		}
 	}
