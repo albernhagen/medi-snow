@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -19,17 +20,19 @@ const (
 type Client struct {
 	httpClient *http.Client
 	baseURL    string
+	logger     *slog.Logger
 }
 
-func NewClient() *Client {
+func NewClient(logger *slog.Logger) *Client {
 	return &Client{
 		httpClient: &http.Client{},
 		baseURL:    baseForecastURL,
+		logger:     logger.With("component", "openmeteo-client"),
 	}
 }
 
 // GetForecast fetches the weather forecast for the given latitude, longitude, and elevation in meters
-func (c *Client) GetForecast(latitude, longitude, elevationMeters float64, forecastDays int) (*ForecastAPIResponse, error) {
+func (c *Client) GetForecast(latitude, longitude, elevationMeters float64, forecastDays int, timezone string) (*ForecastAPIResponse, error) {
 	u, err := url.Parse(c.baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse base URL: %w", err)
@@ -84,7 +87,11 @@ func (c *Client) GetForecast(latitude, longitude, elevationMeters float64, forec
 	q.Set("daily", strings.Join(dailyVars, ","))
 	q.Set("models", strings.Join(modelVars, ","))
 
-	q.Set("timezone", "GMT")
+	if timezone == "" {
+		timezone = "GMT"
+	}
+
+	q.Set("timezone", timezone)
 	q.Set("forecast_days", strconv.Itoa(forecastDays))
 	q.Set("timeformat", "iso8601")
 	q.Set("wind_speed_unit", "mph")
@@ -92,7 +99,10 @@ func (c *Client) GetForecast(latitude, longitude, elevationMeters float64, forec
 	q.Set("precipitation_unit", "inch")
 	u.RawQuery = q.Encode()
 
-	resp, err := c.httpClient.Get(u.String())
+	fullUrl := u.String()
+	c.logger.Debug("fetching forecast", "url", fullUrl)
+
+	resp, err := c.httpClient.Get(fullUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch: %w", err)
 	}

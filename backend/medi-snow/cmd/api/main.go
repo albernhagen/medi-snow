@@ -22,7 +22,10 @@ func main() {
 	slog.SetDefault(logger) // Set as default logger for the application
 
 	// Create app
-	app := NewApp(cfg, logger)
+	app, err := NewApp(cfg, logger)
+	if err != nil {
+		log.Fatalf("Failed to create app: %v", err)
+	}
 
 	// Start server
 	logger.Info("starting server", "addr", cfg.GetServerAddr())

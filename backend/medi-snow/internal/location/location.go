@@ -42,20 +42,22 @@ type locationService struct {
 
 // NewLocationService creates a new location service with real provider clients
 func NewLocationService(logger *slog.Logger) Service {
-	return &locationService{
-		elevationProvider: usgs.NewClient(logger),
-		locationProvider:  openstreetmap.NewClient(logger),
-		logger:            logger.With("component", "location-service"),
-	}
+	return NewLocationServiceWithProviders(
+		logger,
+		usgs.NewClient(logger),
+		openstreetmap.NewClient(logger),
+	)
 }
 
 // NewLocationServiceWithProviders creates a new location service with custom providers
 // This is useful for testing with mock providers
 func NewLocationServiceWithProviders(
+	logger *slog.Logger,
 	elevationProvider ElevationProvider,
 	locationProvider ReverseGeocodeProvider,
 ) Service {
 	return &locationService{
+		logger:            logger.With("component", "location-service"),
 		elevationProvider: elevationProvider,
 		locationProvider:  locationProvider,
 	}

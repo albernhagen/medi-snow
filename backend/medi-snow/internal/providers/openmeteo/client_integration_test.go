@@ -4,6 +4,8 @@ package openmeteo
 
 import (
 	"encoding/json"
+	"log/slog"
+	"os"
 	"testing"
 )
 
@@ -13,13 +15,19 @@ func TestForecastClient_GetForecast_Integration(t *testing.T) {
 	lon := -107.65840
 	elevation := 4352.0 // meters
 	forecastDays := 1
+	timezone := "America/Denver"
 
-	client := NewClient()
+	// Create logger for test
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	client := NewClient(logger)
 
 	t.Logf("Making API call to OpenMeteo Forecast API...")
 	t.Logf("Coordinates: lat=%f, lon=%f, elevation=%f meters", lat, lon, elevation)
 
-	resp, err := client.GetForecast(lat, lon, elevation, forecastDays)
+	resp, err := client.GetForecast(lat, lon, elevation, forecastDays, timezone)
 	if err != nil {
 		t.Fatalf("Failed to get forecast: %v", err)
 	}
