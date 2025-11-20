@@ -94,7 +94,7 @@ func (s *weatherService) GetForecast(forecastPoint types.ForecastPoint) (*Foreca
 		return nil, fmt.Errorf("failed to get forecast: %w", err)
 	}
 
-	return mapForecastAPIResponseToForecast(forecastPoint, primaryModel, apiResponse), nil
+	return mapForecastAPIResponseToForecast(forecastPoint, primaryModel, apiResponse)
 }
 
 func (s *weatherService) GetForecastDiscussion(forecastPoint types.ForecastPoint) (string, error) {
@@ -126,7 +126,7 @@ func (s *weatherService) GetForecastDiscussion(forecastPoint types.ForecastPoint
 	return afdResp.ProductText, nil
 }
 
-func mapForecastAPIResponseToForecast(forecastPoint types.ForecastPoint, primaryModel string, apiResponse *openmeteo.ForecastAPIResponse) *Forecast {
+func mapForecastAPIResponseToForecast(forecastPoint types.ForecastPoint, primaryModel string, apiResponse *openmeteo.ForecastAPIResponse) (*Forecast, error) {
 
 	// TODO validate response data
 	forecast := &Forecast{
@@ -141,7 +141,7 @@ func mapForecastAPIResponseToForecast(forecastPoint types.ForecastPoint, primary
 	// Get current time for the supplied timezone like "America/Denver"
 	location, err := time.LoadLocation(apiResponse.Timezone)
 	if err != nil {
-		location = time.UTC
+		return nil, fmt.Errorf("failed to load timezone location %s: %w", apiResponse.Timezone, err)
 	}
 	currentTime := time.Now().In(location)
 
@@ -292,7 +292,9 @@ func mapForecastAPIResponseToForecast(forecastPoint types.ForecastPoint, primary
 		dailyForecasts = append(dailyForecasts, dailyForecast)
 	}
 
-	return forecast
+	forecast.DailyForecasts = dailyForecasts
+
+	return forecast, nil
 
 }
 

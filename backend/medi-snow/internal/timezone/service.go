@@ -15,7 +15,6 @@ type Service interface {
 // service implements timezone lookup using tzf
 type service struct {
 	finder tzf.F
-	mu     sync.RWMutex
 }
 
 var (
@@ -46,9 +45,6 @@ func NewService() (Service, error) {
 // GetTimezone returns the IANA timezone name for the given coordinates
 // Returns timezone names like "America/Denver", "Europe/London", etc.
 func (s *service) GetTimezone(latitude, longitude float64) (string, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
 	timezone := s.finder.GetTimezoneName(longitude, latitude)
 	if timezone == "" {
 		return "", fmt.Errorf("could not determine timezone for coordinates lat=%f, lon=%f", latitude, longitude)
