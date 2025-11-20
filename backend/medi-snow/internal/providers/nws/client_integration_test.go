@@ -4,6 +4,8 @@ package nws
 
 import (
 	"encoding/json"
+	"log/slog"
+	"os"
 	"testing"
 )
 
@@ -12,7 +14,12 @@ func TestClient_GetPoint_Integration(t *testing.T) {
 	lat := 39.11539
 	lon := -107.65840
 
-	client := NewClient()
+	// Create logger for test
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	client := NewClient(logger)
 
 	t.Logf("Making API call to NWS Points API...")
 	t.Logf("Coordinates: lat=%f, lon=%f", lat, lon)
@@ -90,12 +97,16 @@ func TestClient_GetAFD_Integration(t *testing.T) {
 	// Use Grand Junction, CO office (GJT) - covers Aspen area
 	locationId := "GJT"
 
-	client := NewClient()
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	client := NewClient(logger)
 
 	t.Logf("Making API call to NWS AFD API...")
 	t.Logf("Location ID: %s", locationId)
 
-	resp, err := client.GetAFD(locationId)
+	resp, err := client.GetAreaForecastDiscussion(locationId)
 	if err != nil {
 		t.Fatalf("Failed to get AFD data: %v", err)
 	}
@@ -170,5 +181,5 @@ func TestClient_GetAFD_Integration(t *testing.T) {
 		t.Error("IssuanceTime is zero")
 	}
 
-	t.Log("✓ GetAFD API call successful, response structure valid")
+	t.Log("✓ GetAreaForecastDiscussion API call successful, response structure valid")
 }

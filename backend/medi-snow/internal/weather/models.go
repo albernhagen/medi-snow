@@ -45,13 +45,12 @@ func (w ModelValues[T]) HasModel(model string) bool {
 }
 
 type Forecast struct {
-	Timestamp              time.Time
-	ForecastPoint          types.ForecastPoint
-	Timezone               string
-	AreaForecastDiscussion string
-	PrimaryModel           string
-	CurrentConditions      CurrentConditions
-	DailyForecasts         []DailyForecast
+	Timestamp         time.Time
+	ForecastPoint     types.ForecastPoint
+	Timezone          string
+	PrimaryModel      string
+	CurrentConditions CurrentConditions
+	DailyForecasts    []DailyForecast
 }
 
 type CurrentConditions struct {
@@ -67,6 +66,7 @@ type CurrentConditions struct {
 }
 
 type DailyForecast struct {
+	Timestamp       time.Time
 	HourlyForecasts []HourlyForecast
 
 	SnowfallWaterEquivalentSum ModelValues[float64]

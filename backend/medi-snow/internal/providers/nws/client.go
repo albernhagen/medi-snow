@@ -90,7 +90,7 @@ func (c *Client) GetPoint(latitude, longitude float64) (*PointAPIResponse, error
 	return &apiResp, nil
 }
 
-func (c *Client) GetAFD(locationId string) (*AFDAPIResponse, error) {
+func (c *Client) GetAreaForecastDiscussion(locationId string) (*AFDAPIResponse, error) {
 	// Build URL with query parameters
 	u, err := url.Parse(c.baseURL)
 	if err != nil {

@@ -9,8 +9,9 @@ type Wind struct {
 	DirectionCardinal string
 }
 
-func NewWindFromMph(speedInMph, gustsInMph, directionDegrees float64) Wind {
-	direction := (directionDegrees / 22.5) + .5 // .5 for rounding
+func NewWindFromMph(speedInMph, gustsInMph float64, directionDegrees int) Wind {
+	directionDegreesFloat := float64(directionDegrees)
+	direction := (directionDegreesFloat / 22.5) + .5 // .5 for rounding
 	var directionMap = make(map[int]string)
 	directionMap[0] = "N"
 	directionMap[1] = "NNE"
@@ -37,7 +38,7 @@ func NewWindFromMph(speedInMph, gustsInMph, directionDegrees float64) Wind {
 		SpeedInKph:        speedInMph * MphToKph,
 		GustsInMph:        gustsInMph,
 		GustsInKph:        gustsInMph * MphToKph,
-		DirectionDegrees:  directionDegrees,
+		DirectionDegrees:  directionDegreesFloat,
 		DirectionCardinal: directionCardinal,
 	}
 }
