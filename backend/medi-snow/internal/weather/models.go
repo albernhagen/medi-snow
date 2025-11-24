@@ -96,7 +96,7 @@ type HourlyForecast struct {
 	End                      time.Time
 	FreezingLevelHeight      ModelValues[float64]
 	IsDay                    ModelValues[bool]
-	Weather                  ModelValues[bool]
+	Weather                  ModelValues[types.Weather]
 	Temperature              ModelValues[types.Temperature]
 	ApparentTemperature      ModelValues[types.Temperature]
 	PrecipitationProbability ModelValues[float64]
@@ -108,11 +108,11 @@ type HourlyForecast struct {
 	Visibility               ModelValues[float64]
 	Wind                     ModelValues[types.Wind]
 	RelativeHumidity         ModelValues[float64]
-	Rain                     ModelValues[types.Precipitation]
+	Rainfall                 ModelValues[types.Precipitation]
 	Showers                  ModelValues[types.Precipitation]
 	Snowfall                 ModelValues[types.Precipitation]
 	SnowDepth                ModelValues[types.SnowDepth]
 
-	// Sum of Rain and Showers
+	// Sum of Rainfall and Showers
 	LiquidPrecipitation ModelValues[types.Precipitation]
 }
