@@ -1,17 +1,33 @@
 package types
 
 type Wind struct {
-	SpeedInMph        float64
-	SpeedInKph        float64
-	GustsInMph        float64
-	GustsInKph        float64
-	DirectionDegrees  float64
-	DirectionCardinal string
+	Speed     WindSpeed
+	Gusts     WindSpeed
+	Direction WindDirection
 }
 
-func NewWindFromMph(speedInMph, gustsInMph float64, directionDegrees int) Wind {
-	directionDegreesFloat := float64(directionDegrees)
-	direction := (directionDegreesFloat / 22.5) + .5 // .5 for rounding
+type WindDirection struct {
+	Degrees  float64
+	Cardinal string
+}
+
+func NewWindSpeedFromMph(speedInMph float64) WindSpeed {
+	return WindSpeed{
+		Mph: speedInMph,
+		Kph: speedInMph * MphToKph,
+	}
+}
+
+func NewWindDirection(degrees int) WindDirection {
+	if degrees < 0 || degrees >= 360 {
+		return WindDirection{
+			Degrees:  -1,
+			Cardinal: "Unknown",
+		}
+	}
+
+	degreesFloat := float64(degrees)
+	direction := (degreesFloat / 22.5) + .5 // .5 for rounding
 	var directionMap = make(map[int]string)
 	directionMap[0] = "N"
 	directionMap[1] = "NNE"
@@ -33,12 +49,27 @@ func NewWindFromMph(speedInMph, gustsInMph float64, directionDegrees int) Wind {
 	index := int(direction) % 16
 	directionCardinal := directionMap[index]
 
+	windDirection := WindDirection{
+		Degrees:  degreesFloat,
+		Cardinal: directionCardinal,
+	}
+
+	return windDirection
+}
+
+type WindSpeed struct {
+	Mph float64
+	Kph float64
+}
+
+func NewWind(speedInMph, gustsInMph float64, directionDegrees int) Wind {
+
+	speed := NewWindSpeedFromMph(speedInMph)
+	gusts := NewWindSpeedFromMph(gustsInMph)
+	direction := NewWindDirection(directionDegrees)
 	return Wind{
-		SpeedInMph:        speedInMph,
-		SpeedInKph:        speedInMph * MphToKph,
-		GustsInMph:        gustsInMph,
-		GustsInKph:        gustsInMph * MphToKph,
-		DirectionDegrees:  directionDegreesFloat,
-		DirectionCardinal: directionCardinal,
+		Speed:     speed,
+		Gusts:     gusts,
+		Direction: direction,
 	}
 }

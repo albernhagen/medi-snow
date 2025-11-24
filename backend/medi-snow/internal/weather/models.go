@@ -69,25 +69,25 @@ type DailyForecast struct {
 	Timestamp       time.Time
 	HourlyForecasts []HourlyForecast
 
-	SnowfallWaterEquivalentSum ModelValues[float64]
 	Weather                    ModelValues[types.Weather]
+	SnowfallWaterEquivalentSum ModelValues[float64]
 	Sunrise                    ModelValues[time.Time]
 	Sunset                     ModelValues[time.Time]
-	WindDominantDirection      ModelValues[int]
+	WindDominantDirection      ModelValues[types.WindDirection]
 
-	HighestFreezingLevelHeight ModelValues[float64]
-	LowestFreezingLevelHeight  ModelValues[float64]
-	HighTemperature            ModelValues[types.Temperature]
-	LowTemperature             ModelValues[types.Temperature]
-	TotalPrecipitation         ModelValues[types.Precipitation]
-	TotalRain                  ModelValues[types.Precipitation]
-	TotalShowers               ModelValues[types.Precipitation]
-	TotalSnowfall              ModelValues[types.Precipitation]
-	TotalLiquidPrecipitation   ModelValues[types.Precipitation]
-	MaxWindSpeed               ModelValues[float64]
-	MinWindSpeed               ModelValues[float64]
-	MaxWindGusts               ModelValues[float64]
-	MinWindGusts               ModelValues[float64]
+	HighestFreezingLevelHeightFt ModelValues[float64]
+	LowestFreezingLevelHeightFt  ModelValues[float64]
+	HighTemperature              ModelValues[types.Temperature]
+	LowTemperature               ModelValues[types.Temperature]
+	TotalPrecipitation           ModelValues[types.Precipitation]
+	TotalRainfall                ModelValues[types.Precipitation]
+	TotalShowers                 ModelValues[types.Precipitation]
+	TotalSnowfall                ModelValues[types.Precipitation]
+	TotalLiquidPrecipitation     ModelValues[types.Precipitation]
+	MaxWindSpeed                 ModelValues[types.WindSpeed]
+	MinWindSpeed                 ModelValues[types.WindSpeed]
+	MaxWindGusts                 ModelValues[types.WindSpeed]
+	MinWindGusts                 ModelValues[types.WindSpeed]
 }
 
 // TODO openmeteo precip note: Some variables like precipitation are calculated from the preceding hour as an average or sum.
