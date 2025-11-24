@@ -467,7 +467,7 @@ func mapForecastAPIResponseToForecast(forecastPoint types.ForecastPoint, primary
 		}
 
 		var hourlySliceStart = dailyForecastHourlyIndexes[0]
-		var hourlySliceEnd = dailyForecastHourlyIndexes[len(dailyForecastHourlyIndexes)]
+		var hourlySliceEnd = dailyForecastHourlyIndexes[len(dailyForecastHourlyIndexes)-1]
 
 		// TODO construct daily forecast
 		dailyForecast := DailyForecast{
@@ -641,7 +641,7 @@ func toPercentage(value int) float64 {
 }
 
 func toTime(value string) time.Time {
-	if t, err := time.Parse("2006-01-02T15:04", value); err != nil {
+	if t, err := time.Parse("2006-01-02T15:04", value); err == nil {
 		return t
 	}
 
