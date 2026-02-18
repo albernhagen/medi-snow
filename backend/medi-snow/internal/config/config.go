@@ -41,7 +41,7 @@ func Load() (*Config, error) {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("./config")
-	viper.AddConfigPath("$HOME/.medi-snow")
+	viper.AddConfigPath("$HOME/.medi-meteorology")
 
 	// Set defaults
 	viper.SetDefault("server.port", 8080)
@@ -51,7 +51,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("app.forecastDays", 16)
 
 	// Read from environment variables
-	viper.SetEnvPrefix("MEDI_SNOW")
+	viper.SetEnvPrefix("MEDI_METEOROLOGY")
 	viper.AutomaticEnv()
 
 	// Read config file

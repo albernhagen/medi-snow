@@ -187,7 +187,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Medi-Snow API",
+	Title:            "Medi-Meteorology API",
 	Description:      "Weather and avalanche forecasting API for ski areas",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

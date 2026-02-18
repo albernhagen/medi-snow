@@ -3,7 +3,7 @@ package avalanche
 import (
 	"fmt"
 	"log/slog"
-	"medi-snow/internal/providers/nac"
+	"medi-meteorology/internal/providers/nac"
 )
 
 // MapLayerProvider fetches the NAC map layer with all forecast zone polygons.

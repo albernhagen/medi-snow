@@ -2,7 +2,7 @@ package avalanche
 
 import (
 	"encoding/json"
-	"medi-snow/internal/providers/nac"
+	"medi-meteorology/internal/providers/nac"
 	"testing"
 	"time"
 )

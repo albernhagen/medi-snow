@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "Weather and avalanche forecasting API for ski areas",
-        "title": "Medi-Snow API",
+        "title": "Medi-Meteorology API",
         "contact": {
             "name": "API Support",
             "email": "support@example.com"

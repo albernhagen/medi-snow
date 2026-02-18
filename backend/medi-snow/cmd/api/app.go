@@ -2,13 +2,13 @@ package main
 
 import (
 	"log/slog"
-	"medi-snow/internal/config"
-	"medi-snow/internal/location"
-	"medi-snow/internal/weather"
+	"medi-meteorology/internal/config"
+	"medi-meteorology/internal/location"
+	"medi-meteorology/internal/weather"
 
 	"github.com/gin-gonic/gin"
 
-	_ "medi-snow/docs" // Ensure docs are imported
+	_ "medi-meteorology/docs" // Ensure docs are imported
 )
 
 // App encapsulates application dependencies

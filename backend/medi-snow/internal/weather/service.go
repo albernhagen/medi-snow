@@ -3,11 +3,11 @@ package weather
 import (
 	"fmt"
 	"log/slog"
-	"medi-snow/internal/config"
-	"medi-snow/internal/providers/nws"
-	"medi-snow/internal/providers/openmeteo"
-	"medi-snow/internal/timezone"
-	"medi-snow/internal/types"
+	"medi-meteorology/internal/config"
+	"medi-meteorology/internal/providers/nws"
+	"medi-meteorology/internal/providers/openmeteo"
+	"medi-meteorology/internal/timezone"
+	"medi-meteorology/internal/types"
 	"time"
 )
 

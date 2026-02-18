@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="API" type="GoApplicationRunConfiguration" factoryName="Go Application">
-    <module name="medi-snow" />
+    <module name="medi-meteorology" />
     <working_directory value="$PROJECT_DIR$/cmd/api" />
     <kind value="PACKAGE" />
-    <package value="medi-snow/cmd/api" />
+    <package value="medi-meteorology/cmd/api" />
     <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/cmd/api/main.go" />
     <method v="2">

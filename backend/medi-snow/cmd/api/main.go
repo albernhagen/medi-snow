@@ -5,9 +5,9 @@ package main
 import (
 	"log"
 	"log/slog"
-	"medi-snow/internal/config"
+	"medi-meteorology/internal/config"
 
-	_ "medi-snow/docs" // Import generated docs
+	_ "medi-meteorology/docs" // Import generated docs
 )
 
 func main() {

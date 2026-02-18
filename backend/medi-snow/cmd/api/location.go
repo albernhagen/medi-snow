@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"medi-snow/internal/location"
-	_ "medi-snow/internal/types" // imported for swagger type definitions
+	"medi-meteorology/internal/location"
+	_ "medi-meteorology/internal/types" // imported for swagger type definitions
 
 	"github.com/gin-gonic/gin"
 )

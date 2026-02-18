@@ -2,8 +2,8 @@ package weather
 
 import (
 	"encoding/json"
-	"medi-snow/internal/providers/openmeteo"
-	"medi-snow/internal/types"
+	"medi-meteorology/internal/providers/openmeteo"
+	"medi-meteorology/internal/types"
 	"os"
 	"testing"
 	"time"

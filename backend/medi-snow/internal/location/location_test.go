@@ -3,9 +3,9 @@ package location
 import (
 	"errors"
 	"log/slog"
-	"medi-snow/internal/providers/openstreetmap"
-	"medi-snow/internal/providers/usgs"
-	"medi-snow/internal/types"
+	"medi-meteorology/internal/providers/openstreetmap"
+	"medi-meteorology/internal/providers/usgs"
+	"medi-meteorology/internal/types"
 	"os"
 	"strings"
 	"testing"

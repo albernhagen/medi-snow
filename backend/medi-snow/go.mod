@@ -1,4 +1,4 @@
-module medi-snow
+module medi-meteorology
 
 go 1.25.3
 

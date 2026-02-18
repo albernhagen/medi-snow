@@ -1,7 +1,7 @@
 package weather
 
 import (
-	"medi-snow/internal/types"
+	"medi-meteorology/internal/types"
 	"time"
 )
 
