@@ -126,15 +126,10 @@ type ForecastResponse struct {
 		Likelihood         string `json:"likelihood"`
 		Discussion         string `json:"discussion"`
 		Media              struct {
-			Url struct {
-				Large     string `json:"large"`
-				Medium    string `json:"medium"`
-				Original  string `json:"original"`
-				Thumbnail string `json:"thumbnail"`
-			} `json:"url"`
-			Type    string      `json:"type"`
-			Title   interface{} `json:"title"`
-			Caption string      `json:"caption"`
+			Url     json.RawMessage `json:"url"`
+			Type    string          `json:"type"`
+			Title   interface{}     `json:"title"`
+			Caption string          `json:"caption"`
 		} `json:"media"`
 		Location           []string `json:"location"`
 		Size               []string `json:"size"`
