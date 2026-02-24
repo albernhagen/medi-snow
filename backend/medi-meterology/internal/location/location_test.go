@@ -1,6 +1,7 @@
 package location
 
 import (
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"medi-meteorology/internal/providers/openstreetmap"
@@ -29,6 +30,77 @@ type mockLocationProvider struct {
 
 func (m *mockLocationProvider) Lookup(latitude, longitude float64) (*openstreetmap.LookupAPIResponse, error) {
 	return m.response, m.err
+}
+
+func TestLocationService_GetForecastPoint_AspenSnapshot(t *testing.T) {
+	// Load USGS elevation snapshot
+	elevData, err := os.ReadFile("testdata/usgs_elevation_response.json")
+	if err != nil {
+		t.Fatalf("Failed to read elevation testdata: %v", err)
+	}
+	var elevResp usgs.ElevationPointAPIResponse
+	if err := json.Unmarshal(elevData, &elevResp); err != nil {
+		t.Fatalf("Failed to unmarshal elevation: %v", err)
+	}
+
+	// Load OpenStreetMap lookup snapshot
+	locData, err := os.ReadFile("testdata/openstreetmap_lookup_response.json")
+	if err != nil {
+		t.Fatalf("Failed to read location testdata: %v", err)
+	}
+	var locResp openstreetmap.LookupAPIResponse
+	if err := json.Unmarshal(locData, &locResp); err != nil {
+		t.Fatalf("Failed to unmarshal location: %v", err)
+	}
+
+	elevProvider := &mockElevationProvider{response: &elevResp}
+	locProvider := &mockLocationProvider{response: &locResp}
+
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
+	service := &locationService{
+		elevationProvider: elevProvider,
+		locationProvider:  locProvider,
+		logger:            logger,
+	}
+
+	fp, err := service.GetForecastPoint(39.11539, -107.65840)
+	if err != nil {
+		t.Fatalf("GetForecastPoint returned error: %v", err)
+	}
+
+	// Validate coordinates
+	if fp.Coordinates.Latitude != 39.11539 {
+		t.Errorf("Latitude = %v, want 39.11539", fp.Coordinates.Latitude)
+	}
+	if fp.Coordinates.Longitude != -107.65840 {
+		t.Errorf("Longitude = %v, want -107.65840", fp.Coordinates.Longitude)
+	}
+
+	// Validate elevation is reasonable for Aspen area (~10,000+ ft)
+	if fp.Elevation.Feet < 9000 || fp.Elevation.Feet > 12000 {
+		t.Errorf("Elevation.Feet = %v, expected between 9000-12000", fp.Elevation.Feet)
+	}
+	t.Logf("Elevation: %.1f ft (%.1f m)", fp.Elevation.Feet, fp.Elevation.Meters)
+
+	// Validate location info
+	if fp.Location.State != "Colorado" {
+		t.Errorf("Location.State = %q, want Colorado", fp.Location.State)
+	}
+	if fp.Location.Country != "United States" {
+		t.Errorf("Location.Country = %q, want United States", fp.Location.Country)
+	}
+	if fp.Location.CountryCode != "us" {
+		t.Errorf("Location.CountryCode = %q, want us", fp.Location.CountryCode)
+	}
+	if fp.Location.Name == "" {
+		t.Error("Location.Name is empty")
+	}
+	if fp.Location.County == "" {
+		t.Error("Location.County is empty")
+	}
+
+	t.Logf("ForecastPoint: name=%s county=%s state=%s elevation=%.0fft",
+		fp.Location.Name, fp.Location.County, fp.Location.State, fp.Elevation.Feet)
 }
 
 func TestLocationService_GetForecastPoint(t *testing.T) {

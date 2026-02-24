@@ -1,0 +1,21 @@
+{
+  "method": "GET",
+  "url": "https://api.open-meteo.com/v1/forecast",
+  "query_parameters": {
+    "latitude": "39.115390",
+    "longitude": "-107.658400",
+    "elevation": "836.218800",
+    "hourly": "freezing_level_height,is_day,temperature_2m,weather_code,apparent_temperature,precipitation_probability,precipitation,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,rain,showers,snowfall,snow_depth",
+    "daily": "snowfall_water_equivalent_sum,weather_code,sunrise,sunset,wind_direction_10m_dominant",
+    "models": "gem_seamless,ecmwf_ifs,gfs_seamless,ncep_nbm_conus,gfs_graphcast025,ecmwf_aifs025_single,ncep_nam_conus",
+    "timezone": "America/Denver",
+    "forecast_days": "16",
+    "timeformat": "iso8601",
+    "wind_speed_unit": "mph",
+    "temperature_unit": "fahrenheit",
+    "precipitation_unit": "inch"
+  },
+  "headers": {},
+  "body": null,
+  "notes": "Open-Meteo multi-model weather forecast for Aspen, CO. Elevation is in meters (2743.5 ft * 0.3048). No authentication required."
+}

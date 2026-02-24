@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "url": "https://api.avalanche.org/v2/public/products/map-layer",
+  "query_parameters": {},
+  "headers": {},
+  "body": null,
+  "notes": "NAC (National Avalanche Center) map layer endpoint. Returns a GeoJSON FeatureCollection with all forecast zone polygons across North America. No authentication required."
+}

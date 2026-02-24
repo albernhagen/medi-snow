@@ -2,7 +2,9 @@ package avalanche
 
 import (
 	"encoding/json"
+	"log/slog"
 	"medi-meteorology/internal/providers/nac"
+	"os"
 	"testing"
 	"time"
 )
@@ -342,6 +344,141 @@ func TestMapForecastResponse(t *testing.T) {
 	if p2.MediaURL != "" {
 		t.Errorf("Problems[1].MediaURL = %q, want empty", p2.MediaURL)
 	}
+}
+
+func TestAvalancheService_GetForecast_AspenSnapshot(t *testing.T) {
+	// Load map layer snapshot
+	mapLayerData, err := os.ReadFile("testdata/nac_map_layer_response.json")
+	if err != nil {
+		t.Fatalf("Failed to read map layer testdata: %v", err)
+	}
+	var mapLayer nac.MapLayerResponse
+	if err := json.Unmarshal(mapLayerData, &mapLayer); err != nil {
+		t.Fatalf("Failed to unmarshal map layer: %v", err)
+	}
+
+	// Load forecast snapshot
+	forecastData, err := os.ReadFile("testdata/nac_forecast_response.json")
+	if err != nil {
+		t.Fatalf("Failed to read forecast testdata: %v", err)
+	}
+	var forecastResp nac.ForecastResponse
+	if err := json.Unmarshal(forecastData, &forecastResp); err != nil {
+		t.Fatalf("Failed to unmarshal forecast: %v", err)
+	}
+
+	// Find the zone for Aspen coordinates
+	zone := nac.FindZone(39.11539, -107.65840, &mapLayer)
+	if zone == nil {
+		t.Fatal("No zone found for Aspen coordinates in snapshot")
+	}
+
+	// Mock providers that return the snapshot data
+	mapLayerProvider := &mockMapLayerProvider{response: &mapLayer}
+	forecastProvider := &mockForecastProvider{response: &forecastResp}
+
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
+	service := NewAvalancheServiceWithProviders(logger, mapLayerProvider, forecastProvider)
+
+	forecast, err := service.GetForecast(39.11539, -107.65840)
+	if err != nil {
+		t.Fatalf("GetForecast returned error: %v", err)
+	}
+
+	// Validate zone was found
+	if forecast.Zone.Id == 0 {
+		t.Error("Zone.Id is 0")
+	}
+	t.Logf("Zone: id=%d name=%s", forecast.Zone.Id, forecast.Zone.Name)
+
+	// Validate center is CAIC
+	if forecast.Center.Id != "CAIC" {
+		t.Errorf("Center.Id = %q, want CAIC", forecast.Center.Id)
+	}
+	if forecast.Center.Name != "Colorado Avalanche Information Center" {
+		t.Errorf("Center.Name = %q, want Colorado Avalanche Information Center", forecast.Center.Name)
+	}
+
+	// Validate danger ratings are present
+	if len(forecast.DangerRatings) < 1 {
+		t.Fatalf("Expected at least 1 danger rating, got %d", len(forecast.DangerRatings))
+	}
+
+	// Validate danger ratings have valid values (0-5)
+	for i, dr := range forecast.DangerRatings {
+		if dr.Lower < 0 || dr.Lower > 5 {
+			t.Errorf("DangerRatings[%d].Lower = %d, expected 0-5", i, dr.Lower)
+		}
+		if dr.Middle < 0 || dr.Middle > 5 {
+			t.Errorf("DangerRatings[%d].Middle = %d, expected 0-5", i, dr.Middle)
+		}
+		if dr.Upper < 0 || dr.Upper > 5 {
+			t.Errorf("DangerRatings[%d].Upper = %d, expected 0-5", i, dr.Upper)
+		}
+		if dr.ValidDay == "" {
+			t.Errorf("DangerRatings[%d].ValidDay is empty", i)
+		}
+		t.Logf("Danger[%d] day=%s lower=%s middle=%s upper=%s",
+			i, dr.ValidDay, dr.Lower, dr.Middle, dr.Upper)
+	}
+
+	// Validate avalanche problems are mapped
+	if len(forecast.Problems) < 1 {
+		t.Fatalf("Expected at least 1 avalanche problem, got %d", len(forecast.Problems))
+	}
+
+	for i, p := range forecast.Problems {
+		if p.Name == "" {
+			t.Errorf("Problems[%d].Name is empty", i)
+		}
+		if p.Rank < 1 {
+			t.Errorf("Problems[%d].Rank = %d, expected >= 1", i, p.Rank)
+		}
+		if p.Likelihood < 0 {
+			t.Errorf("Problems[%d].Likelihood = %d, expected >= 0", i, p.Likelihood)
+		}
+		if len(p.Location) == 0 {
+			t.Errorf("Problems[%d].Location is empty", i)
+		}
+		if p.Size.Min <= 0 || p.Size.Max <= 0 {
+			t.Errorf("Problems[%d].Size = {Min: %f, Max: %f}, expected positive values", i, p.Size.Min, p.Size.Max)
+		}
+		t.Logf("Problem[%d] name=%s rank=%d likelihood=%s size=[%.1f-%.1f] locations=%d",
+			i, p.Name, p.Rank, p.Likelihood, p.Size.Min, p.Size.Max, len(p.Location))
+	}
+
+	// Validate times are set
+	if forecast.PublishedTime.IsZero() {
+		t.Error("PublishedTime is zero")
+	}
+	if forecast.ExpiresTime.IsZero() {
+		t.Error("ExpiresTime is zero")
+	}
+
+	t.Logf("Forecast: author=%s published=%s expires=%s problems=%d dangerRatings=%d",
+		forecast.Author, forecast.PublishedTime.Format(time.RFC3339),
+		forecast.ExpiresTime.Format(time.RFC3339),
+		len(forecast.Problems), len(forecast.DangerRatings))
+}
+
+// Mock providers for snapshot-based tests
+
+type mockMapLayerProvider struct {
+	response *nac.MapLayerResponse
+	err      error
+}
+
+func (m *mockMapLayerProvider) GetMapLayer() (*nac.MapLayerResponse, error) {
+	return m.response, m.err
+}
+
+type mockForecastProvider struct {
+	response *nac.ForecastResponse
+	err      error
+}
+
+func (m *mockForecastProvider) GetForecast(centerId string, zoneId int) (*nac.ForecastResponse, error) {
+	return m.response, m.err
 }
 
 func TestMapForecastResponse_EmptyForecast(t *testing.T) {

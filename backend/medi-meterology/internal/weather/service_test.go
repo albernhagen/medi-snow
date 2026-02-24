@@ -375,6 +375,144 @@ func TestMapForecastAPIResponseToForecast(t *testing.T) {
 		len(forecast.DailyForecasts), len(forecast.CurrentConditions.Temperature))
 }
 
+func TestMapForecastAPIResponseToForecast_AspenSnapshot(t *testing.T) {
+	// Load the refreshed snapshot captured from the live API
+	data, err := os.ReadFile("testdata/openmeteo_forecast_response.json")
+	if err != nil {
+		t.Fatalf("Failed to read testdata file: %v", err)
+	}
+
+	var apiResponse openmeteo.ForecastAPIResponse
+	if err := json.Unmarshal(data, &apiResponse); err != nil {
+		t.Fatalf("Failed to unmarshal API response: %v", err)
+	}
+
+	forecastPoint := types.ForecastPoint{
+		Coordinates: types.Coords{
+			Latitude:  39.11539,
+			Longitude: -107.6584,
+		},
+		Elevation: types.Elevation{
+			Meters: 2743.5 * 0.3048,
+		},
+	}
+
+	// Test with each model that we know should work
+	models := []string{
+		ModelGfsSeamless,
+		ModelGemSeamless,
+		ModelEcmwIfs,
+		ModelNcepNbmConus,
+		ModelGfsGraphcast025,
+		ModelEcmwfAifs025Single,
+		ModelNcepNamConus,
+	}
+
+	for _, model := range models {
+		t.Run(model, func(t *testing.T) {
+			forecast, err := mapForecastAPIResponseToForecast(forecastPoint, model, &apiResponse)
+			if err != nil {
+				t.Fatalf("mapForecastAPIResponseToForecast(%s) error: %v", model, err)
+			}
+
+			// Timezone should be America/Denver
+			if forecast.Timezone != "America/Denver" {
+				t.Errorf("Timezone = %q, want America/Denver", forecast.Timezone)
+			}
+
+			// Should have 16 daily forecasts
+			if len(forecast.DailyForecasts) != 16 {
+				t.Errorf("DailyForecasts = %d, want 16", len(forecast.DailyForecasts))
+			}
+
+			// Primary model should match
+			if forecast.PrimaryModel != model {
+				t.Errorf("PrimaryModel = %q, want %q", forecast.PrimaryModel, model)
+			}
+		})
+	}
+
+	// Detailed validation with GFS model
+	forecast, err := mapForecastAPIResponseToForecast(forecastPoint, ModelGfsSeamless, &apiResponse)
+	if err != nil {
+		t.Fatalf("mapForecastAPIResponseToForecast error: %v", err)
+	}
+
+	// All 7 models should have current conditions
+	if len(forecast.CurrentConditions.Temperature) != 7 {
+		t.Errorf("CurrentConditions.Temperature has %d models, want 7", len(forecast.CurrentConditions.Temperature))
+	}
+	if len(forecast.CurrentConditions.Weather) != 7 {
+		t.Errorf("CurrentConditions.Weather has %d models, want 7", len(forecast.CurrentConditions.Weather))
+	}
+	if len(forecast.CurrentConditions.Wind) != 7 {
+		t.Errorf("CurrentConditions.Wind has %d models, want 7", len(forecast.CurrentConditions.Wind))
+	}
+	if len(forecast.CurrentConditions.CloudCover) != 7 {
+		t.Errorf("CurrentConditions.CloudCover has %d models, want 7", len(forecast.CurrentConditions.CloudCover))
+	}
+
+	// Validate temperature ranges are reasonable for all models
+	for model, temp := range forecast.CurrentConditions.Temperature {
+		if temp.Fahrenheit < -60 || temp.Fahrenheit > 130 {
+			t.Errorf("Model %s: temperature %.1f°F is out of reasonable range", model, temp.Fahrenheit)
+		}
+	}
+
+	// Validate wind values
+	for model, wind := range forecast.CurrentConditions.Wind {
+		if wind.Speed.Mph < 0 || wind.Speed.Mph > 200 {
+			t.Errorf("Model %s: wind speed %.1f mph is out of reasonable range", model, wind.Speed.Mph)
+		}
+		if wind.Direction.Degrees < 0 || wind.Direction.Degrees > 360 {
+			t.Errorf("Model %s: wind direction %.0f° is out of range", model, wind.Direction.Degrees)
+		}
+	}
+
+	// Validate first daily forecast
+	if len(forecast.DailyForecasts) > 0 {
+		day := forecast.DailyForecasts[0]
+
+		// Check sunrise/sunset for GFS
+		sunrise, ok := day.Sunrise.GetForModel(ModelGfsSeamless)
+		if !ok {
+			t.Error("No GFS sunrise data")
+		} else if sunrise.IsZero() {
+			t.Error("GFS sunrise is zero")
+		}
+
+		sunset, ok := day.Sunset.GetForModel(ModelGfsSeamless)
+		if !ok {
+			t.Error("No GFS sunset data")
+		} else if sunset.IsZero() {
+			t.Error("GFS sunset is zero")
+		}
+
+		// Snowfall water equivalent should be non-negative
+		swe, ok := day.SnowfallWaterEquivalentSum.GetForModel(ModelGfsSeamless)
+		if !ok {
+			t.Error("No GFS snowfall water equivalent data")
+		} else if swe < 0 {
+			t.Errorf("GFS snowfall water equivalent = %f, should be >= 0", swe)
+		}
+
+		// High/low temps should make sense
+		high, hok := day.HighTemperature.GetForModel(ModelGfsSeamless)
+		low, lok := day.LowTemperature.GetForModel(ModelGfsSeamless)
+		if hok && lok {
+			if high.Fahrenheit < low.Fahrenheit {
+				t.Errorf("High temp (%.1f°F) < Low temp (%.1f°F)", high.Fahrenheit, low.Fahrenheit)
+			}
+		}
+
+		t.Logf("Day 1: high=%.1f°F low=%.1f°F swe=%.3fin",
+			high.Fahrenheit, low.Fahrenheit, swe)
+	}
+
+	t.Logf("Successfully validated forecast with %d daily forecasts across %d models",
+		len(forecast.DailyForecasts), len(forecast.CurrentConditions.Temperature))
+}
+
 func TestMapForecastAPIResponseToForecast_InvalidTimezone(t *testing.T) {
 	apiResponse := &openmeteo.ForecastAPIResponse{
 		Timezone: "Invalid/Timezone",
