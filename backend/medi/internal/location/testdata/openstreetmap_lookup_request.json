@@ -1,0 +1,12 @@
+{
+  "method": "GET",
+  "url": "https://nominatim.openstreetmap.org/reverse",
+  "query_parameters": {
+    "lat": "39.115390",
+    "lon": "-107.658400",
+    "format": "json"
+  },
+  "headers": {},
+  "body": null,
+  "notes": "OpenStreetMap Nominatim reverse geocoding. Returns the closest named place for the given coordinates. No authentication required. API docs: https://nominatim.org/release-docs/develop/api/Reverse/"
+}

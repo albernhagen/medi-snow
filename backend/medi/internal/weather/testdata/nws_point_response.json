@@ -1,0 +1,94 @@
+{
+  "@context": [
+    "https://geojson.org/geojson-ld/geojson-context.jsonld",
+    {
+      "@version": "1.1",
+      "@vocab": "https://api.weather.gov/ontology#",
+      "bearing": {
+        "@type": "s:QuantitativeValue"
+      },
+      "city": "s:addressLocality",
+      "county": {
+        "@type": "@id"
+      },
+      "distance": {
+        "@id": "s:Distance",
+        "@type": "s:QuantitativeValue"
+      },
+      "forecastGridData": {
+        "@type": "@id"
+      },
+      "forecastOffice": {
+        "@type": "@id"
+      },
+      "geo": "http://www.opengis.net/ont/geosparql#",
+      "geometry": {
+        "@id": "s:GeoCoordinates",
+        "@type": "geo:wktLiteral"
+      },
+      "publicZone": {
+        "@type": "@id"
+      },
+      "s": "https://schema.org/",
+      "state": "s:addressRegion",
+      "unit": "http://codes.wmo.int/common/unit/",
+      "unitCode": {
+        "@id": "s:unitCode",
+        "@type": "@id"
+      },
+      "value": {
+        "@id": "s:value"
+      },
+      "wx": "https://api.weather.gov/ontology#"
+    }
+  ],
+  "id": "https://api.weather.gov/points/39.1154,-107.6584",
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -107.6584,
+      39.1154
+    ]
+  },
+  "properties": {
+    "@id": "https://api.weather.gov/points/39.1154,-107.6584",
+    "@type": "wx:Point",
+    "cwa": "GJT",
+    "forecastOffice": "https://api.weather.gov/offices/GJT",
+    "gridId": "GJT",
+    "gridX": 127,
+    "gridY": 101,
+    "forecast": "https://api.weather.gov/gridpoints/GJT/127,101/forecast",
+    "forecastHourly": "https://api.weather.gov/gridpoints/GJT/127,101/forecast/hourly",
+    "forecastGridData": "https://api.weather.gov/gridpoints/GJT/127,101",
+    "observationStations": "https://api.weather.gov/gridpoints/GJT/127,101/stations",
+    "relativeLocation": {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -107.591433,
+          38.869824
+        ]
+      },
+      "properties": {
+        "city": "Paonia",
+        "state": "CO",
+        "distance": {
+          "unitCode": "wmoUnit:m",
+          "value": 27913.424082594
+        },
+        "bearing": {
+          "unitCode": "wmoUnit:degree_(angle)",
+          "value": 348
+        }
+      }
+    },
+    "forecastZone": "https://api.weather.gov/zones/forecast/COZ009",
+    "county": "https://api.weather.gov/zones/county/COC029",
+    "fireWeatherZone": "https://api.weather.gov/zones/fire/COZ293",
+    "timeZone": "America/Denver",
+    "radarStation": "KGJX"
+  }
+}

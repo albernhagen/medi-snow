@@ -1,0 +1,8 @@
+{
+  "method": "GET",
+  "url": "https://api.weather.gov/points/39.115390,-107.658400",
+  "query_parameters": {},
+  "headers": {},
+  "body": null,
+  "notes": "NWS (National Weather Service) point metadata. Returns forecast office (CWA), grid coordinates, and links to forecast endpoints for the given lat/lon. The CWA value (e.g. 'GJT') is used to fetch the Area Forecast Discussion. No authentication required. API docs: https://www.weather.gov/documentation/services-web-api"
+}
