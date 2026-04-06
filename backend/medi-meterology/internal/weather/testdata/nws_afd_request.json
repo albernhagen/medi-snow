@@ -1,8 +1,0 @@
-{
-  "method": "GET",
-  "url": "https://api.weather.gov/products/types/AFD/locations/GJT/latest",
-  "query_parameters": {},
-  "headers": {},
-  "body": null,
-  "notes": "NWS Area Forecast Discussion (AFD) for the Grand Junction, CO office (GJT). The location ID comes from the 'cwa' field in the NWS point response. Returns the latest text forecast discussion from meteorologists. No authentication required."
-}
