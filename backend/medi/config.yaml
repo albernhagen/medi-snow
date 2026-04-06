@@ -1,4 +1,4 @@
-# Medi-Meteorology API Configuration
+# Medi API Configuration
 
 server:
   port: 8080

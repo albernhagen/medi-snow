@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/medi-meterology.iml" filepath="$PROJECT_DIR$/.idea/medi-meterology.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/medi.iml" filepath="$PROJECT_DIR$/.idea/medi.iml" />
     </modules>
   </component>
 </project>

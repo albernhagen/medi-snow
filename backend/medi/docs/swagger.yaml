@@ -58,7 +58,7 @@ info:
     email: support@example.com
     name: API Support
   description: Weather and avalanche forecasting API for ski areas
-  title: Medi-Meteorology API
+  title: Medi API
   version: 1.0.0
 paths:
   /location/forecast-point:

@@ -1,6 +1,6 @@
 package main
 
-// @title Medi-Meteorology API
+// @title Medi API
 // @version 1.0.0
 // @description Weather and avalanche forecasting API for ski areas
 // @contact.name API Support
